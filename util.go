@@ -4,7 +4,7 @@ import "github.com/fsm/fsm"
 
 // GetStateMap converts a fsm.StateMachine into a fsm.StateMap
 func GetStateMap(stateMachine fsm.StateMachine) fsm.StateMap {
-	stateMap := make(map[string]fsm.BuildState, 0)
+	stateMap := make(fsm.StateMap, 0)
 	for _, buildState := range stateMachine {
 		stateMap[buildState(nil, nil).Slug] = buildState
 	}
@@ -12,7 +12,7 @@ func GetStateMap(stateMachine fsm.StateMachine) fsm.StateMap {
 }
 
 // Step performs a single step through a StateMachine
-func Step(uuid, input string, store fsm.Store, stateMap map[string]fsm.BuildState, getEmitter func(string) fsm.Emitter) {
+func Step(uuid, input string, store fsm.Store, emitter fsm.Emitter, stateMap fsm.StateMap) {
 	// Get Traverser
 	newTraverser := false
 	traverser, err := store.FetchTraverser(uuid)
@@ -21,9 +21,6 @@ func Step(uuid, input string, store fsm.Store, stateMap map[string]fsm.BuildStat
 		traverser.SetCurrentState("start")
 		newTraverser = true
 	}
-
-	// Create emitter
-	emitter := getEmitter(uuid)
 
 	// Get current state
 	currentState := stateMap[traverser.CurrentState()](emitter, traverser)
@@ -41,7 +38,7 @@ func Step(uuid, input string, store fsm.Store, stateMap map[string]fsm.BuildStat
 	}
 }
 
-func performEntryAction(state *fsm.State, emitter fsm.Emitter, traverser fsm.Traverser, stateMap map[string]fsm.BuildState) error {
+func performEntryAction(state *fsm.State, emitter fsm.Emitter, traverser fsm.Traverser, stateMap fsm.StateMap) error {
 	err := state.EntryAction()
 	if err != nil {
 		return err
