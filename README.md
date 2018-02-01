@@ -4,6 +4,10 @@
 
 This package contains utility functions for creating [FSM](https://github.com/fsm/fsm) [targets](https://github.com/search?q=topic%3Afsm-target+org%3Afsm&type=Repositories).
 
+> It's possible that the reason you are digging into this repository is because you are building a custom target.
+>
+> If that's the case, feel free to file an issue in [fsm/fsm](https://github.com/fsm/fsm) and we'll try to help you out!
+
 ## License
 
 [MIT](LICENSE.md)
