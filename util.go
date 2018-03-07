@@ -12,13 +12,14 @@ func GetStateMap(stateMachine fsm.StateMachine) fsm.StateMap {
 }
 
 // Step performs a single step through a StateMachine
-func Step(uuid, input string, store fsm.Store, emitter fsm.Emitter, stateMap fsm.StateMap) {
+func Step(platform, uuid, input string, store fsm.Store, emitter fsm.Emitter, stateMap fsm.StateMap) {
 	// Get Traverser
 	newTraverser := false
 	traverser, err := store.FetchTraverser(uuid)
 	if err != nil {
 		traverser, _ = store.CreateTraverser(uuid)
 		traverser.SetCurrentState("start")
+		traverser.Upsert("platform", platform)
 		newTraverser = true
 	}
 
