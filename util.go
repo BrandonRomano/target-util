@@ -12,14 +12,14 @@ func GetStateMap(stateMachine fsm.StateMachine) fsm.StateMap {
 }
 
 // Step performs a single step through a StateMachine
-func Step(platform, uuid, input string, store fsm.Store, emitter fsm.Emitter, stateMap fsm.StateMap) {
+func Step(platform, uuid string, input interface{}, inputToIntentTransformer fsm.InputToIntentTransformer, store fsm.Store, emitter fsm.Emitter, stateMap fsm.StateMap) {
 	// Get Traverser
 	newTraverser := false
 	traverser, err := store.FetchTraverser(uuid)
 	if err != nil {
 		traverser, _ = store.CreateTraverser(uuid)
-		traverser.SetCurrentState("start")
-		traverser.Upsert("platform", platform)
+		traverser.SetCurrentState(fsm.StartState)
+		traverser.SetPlatform(platform)
 		newTraverser = true
 	}
 
@@ -30,17 +30,22 @@ func Step(platform, uuid, input string, store fsm.Store, emitter fsm.Emitter, st
 	}
 
 	// Transition
-	newState := currentState.Transition(input)
-	if newState != nil {
-		traverser.SetCurrentState(newState.Slug)
-		performEntryAction(newState, emitter, traverser, stateMap)
+	intent := inputToIntentTransformer(input, currentState.ValidIntents())
+	if intent != nil {
+		newState := currentState.Transition(intent)
+		if newState != nil {
+			traverser.SetCurrentState(newState.Slug)
+			performEntryAction(newState, emitter, traverser, stateMap)
+		} else {
+			currentState.Entry(true)
+		}
 	} else {
-		currentState.ReentryAction()
+		currentState.Entry(true)
 	}
 }
 
 func performEntryAction(state *fsm.State, emitter fsm.Emitter, traverser fsm.Traverser, stateMap fsm.StateMap) error {
-	err := state.EntryAction()
+	err := state.Entry(false)
 	if err != nil {
 		return err
 	}
